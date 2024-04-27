@@ -1,6 +1,5 @@
 from pyspark import RDD
 from typing import Dict, Tuple
-from copy import deepcopy
 
 def _headFilter(seq:str):
     return not seq.startswith('"대여소')
@@ -14,9 +13,9 @@ def _mapperFunc(seq:str, rdd_size:float) -> Tuple[str, float]:
     Returns:
         Tuple[str, float]: _description_
     """
-    return seq.split(',')[0], 1./rdd_size
+    return seq.split(',')[0][1:-1], 1.#/rdd_size
 
-def getScoreVectors(data_rdd:RDD) -> Tuple[Dict[str, float], Dict[str, float]]:
+def getScoreVector(data_rdd:RDD) -> RDD:
     """_summary_
 
     Args:
@@ -29,7 +28,6 @@ def getScoreVectors(data_rdd:RDD) -> Tuple[Dict[str, float], Dict[str, float]]:
     rdd_size = float(rdd.count())
     
     rdd = rdd.map(lambda seq: _mapperFunc(seq, rdd_size))
-    vec1 = rdd.collectAsMap()
-    vec2 = deepcopy(vec1)
+    vec1 = rdd
     
-    return vec1, vec2
+    return vec1
