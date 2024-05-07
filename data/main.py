@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
-from link_matrix import getLinkMatrices
-from score_vector import getScoreVector
+from alg.link_info import LinkInfo
+from alg.stop_info import StopInfo
 from typing import Dict, Tuple, List
 from copy import deepcopy
 from tqdm import trange
@@ -76,10 +76,13 @@ def main(
     link_data_rdd = sc.textFile(link_data_path)
     id_data_rdd = sc.textFile(id_data_path)
     
-    A, A_t = getLinkMatrices(data_rdd=link_data_rdd)
+    link_info = LinkInfo(data_rdd=link_data_rdd)
+    A = link_info.getLinkMatrix()
+    A_t = link_info.getTransposedLinkMatrix()
     A, A_t = A.collectAsMap(), A_t.collectAsMap()
     
-    h_score = getScoreVector(data_rdd=id_data_rdd)
+    stop_info = StopInfo(data_rdd=id_data_rdd)
+    h_score = stop_info.getScoreVector
     h_score = h_score.collectAsMap()
     a_score = deepcopy(h_score)
     
@@ -100,7 +103,7 @@ if __name__ == "__main__":
         train_epoch=10000,
         link_data_path='./encoded_data/20240421.csv',
         id_data_path='./encoded_data/stops.csv',
-        save_h_path="./hub_score/20240421.csv",
-        save_a_path="./authority_score/20240421.csv"
+        save_h_path="./scores/20240421_h.csv",
+        save_a_path="./scores/20240421_a.csv"
     )
 
