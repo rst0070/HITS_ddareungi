@@ -1,8 +1,8 @@
 from pyspark.sql import SparkSession
 from alg.link_info import LinkInfo
 from alg.stop_info import StopInfo
-from alg.calculation import Calculator
-from typing import Tuple, List
+from alg.calculation import HITSCalculator
+from typing import Tuple, Dict, List
 from pyspark import RDD
 
 class Main(object):
@@ -37,9 +37,12 @@ class Main(object):
         stop_info = StopInfo(data_rdd=id_data_rdd)
         self.h_score = stop_info.getScoreVector()
         self.a_score = stop_info.getScoreVector()
-        self.stop_info = stop_info.getStopInfo()
         
-        self.calculator = Calculator()
+        self.stop_info:Dict[str, Tuple[str, float, float]] \
+            = stop_info.getStopInfo().collectAsMap()
+        
+        self.calculator = HITSCalculator()
+        
         
     def process(self,
         save_h_path:str,
@@ -68,23 +71,42 @@ class Main(object):
         ###
         ### join scores with information of stops
         ###
-        h_score_and_info = self.h_score.join(self.stop_info)
-        a_score_and_info = self.a_score.join(self.stop_info)
-        
-        def extract_values(x:Tuple[str, Tuple[float, Tuple[str, float, float]]]):
-            return x[0], x[1][0], x[1][1][0], x[1][1][1], x[1][1][2]
-            
-        h_score_and_info = h_score_and_info.map(extract_values)
-        a_score_and_info = a_score_and_info.map(extract_values)
+        h_score_and_info = self.mergeScoreAndInfo(self.h_score, self.stop_info)
+        a_score_and_info = self.mergeScoreAndInfo(self.a_score, self.stop_info)
         
         ###
         ### output to file
         ###
         self.saveInfoAsCsv(h_score_and_info, save_h_path)
         self.saveInfoAsCsv(a_score_and_info, save_a_path)
+        
+    def mergeScoreAndInfo(
+            self, 
+            score:Dict[str, float],
+            info:Dict[str, Tuple[str, float, float]]
+        ) -> List[Tuple[str, float, str, float, float]]:
+        """_summary_
+        1. Merge score and stop information.
+        2. for better understanding adjust the score range
+        Args:
+            score (Dict[str, float]): _description_
+            info (Dict[str, Tuple[str, float, float]]): _description_
+
+        Returns:
+            List[Tuple[str, float, str, float, float]]: each element has info of each stop including score
+        """
+        num_stops = len(score.keys())
+        result = []
+        for stop_id, x in info.items():
+            result.append(
+                (stop_id, score[stop_id] * num_stops, x[0], x[1], x[2])
+            )
+        
+        result = sorted(result, key = lambda x: x[1], reverse=True)
+            
+        return result
     
-    def saveInfoAsCsv(self, data:RDD[tuple[str, float, str, float, float]], path:str):
-        data = data.collect()
+    def saveInfoAsCsv(self, data:List[tuple[str, float, str, float, float]], path:str):
         with open(path, 'w') as f:
             f.write("stop_id,score,address,latitude,longitude\n")
             
@@ -97,7 +119,7 @@ class Main(object):
     
 if __name__ == "__main__":
     
-    main = Main(hits_iteration=1,
+    main = Main(hits_iteration=800,
                 link_data_path='./encoded_data/20240421.csv',
                 id_data_path='./encoded_data/stops.csv'
             )

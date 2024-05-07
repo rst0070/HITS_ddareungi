@@ -22,7 +22,7 @@ class StopInfo(object):
             for i in range(0, len(x)):
                 x[i] = x[i][1:-1]
             
-            return x[0], x[1]+x[2], float(x[3]), float(x[4])
+            return x[0], x[1]+x[2], float(x[-2]), float(x[-1])
             
         self.data = data_rdd \
             .filter(filterHead) \
