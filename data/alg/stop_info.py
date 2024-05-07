@@ -22,21 +22,22 @@ class StopInfo(object):
             for i in range(0, len(x)):
                 x[i] = x[i][1:-1]
             
-            return x[0], x[1], x[2], float(x[3]), float(x[4])
+            return x[0], x[1]+x[2], float(x[3]), float(x[4])
             
         self.data = data_rdd \
             .filter(filterHead) \
             .map(infoMapper)
         
         
-    def getStopInfo(self) -> RDD[Tuple[str, str, str, float, float]]:
+    def getStopInfo(self) -> RDD[Tuple[str, Tuple[str, float, float]]]:
         """
         Returns ddareungi stop information
         
         Returns:
-            RDD[Tuple[str, str, str, float, float]]: ("stop_id", "addr1"', "addr2", latitude, longitude)
+            RDD[Tuple[str, Tuple[str, float, float]]]: ("stop_id", ("addr1+addr2", latitude, longitude))
         """
-        return self.data
+        info = self.data.map(lambda x: (x[0], (x[1:])))
+        return info
     
     def getScoreVector(self) -> RDD[Tuple[str, float]]:
         """_summary_

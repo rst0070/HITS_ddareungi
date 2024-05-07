@@ -1,109 +1,109 @@
 from pyspark.sql import SparkSession
 from alg.link_info import LinkInfo
 from alg.stop_info import StopInfo
-from typing import Dict, Tuple, List
-from copy import deepcopy
-from tqdm import trange
+from alg.calculation import Calculator
+from typing import Tuple, List
+from pyspark import RDD
 
-## RDD is like below
-## (start stop, [(end stop, number of bikes used that route), ....])
-
-def calculate(
-    max_epoch:int,
-    A:Dict[str, List[Tuple[str, float]]], 
-    A_t:Dict[str, List[Tuple[str, float]]], 
-    h_score:Dict[str, float], 
-    a_score:Dict[str, float]):
+class Main(object):
     
-    pbar = trange(0, max_epoch, desc="calculating score vectors")
-    for epoch in pbar:
+    def __init__(self,
+        hits_iteration:int,
+        link_data_path:str,
+        id_data_path:str):
         
-        ## update h_score
-        max_val_of_vec = 1e-12
-        for hub, out_links in A.items():
-            score_sum = 0. # for hub node
-            for authority, rate_link in out_links:
-                score_sum += rate_link * a_score[authority]
+        self.hits_iteration = hits_iteration
+        
+        spark = SparkSession \
+            .builder \
+            .master('local') \
+            .appName('demo') \
+            .config("spark.driver.memory", "5g") \
+            .config('spark.executor.memory', '5g') \
+            .getOrCreate()
             
-            max_val_of_vec = max(max_val_of_vec, score_sum)
-            h_score[hub] = score_sum
+        sc = spark.sparkContext
+        link_data_rdd = sc.textFile(link_data_path)
+        id_data_rdd = sc.textFile(id_data_path)
         
-        ## normalize h_score
-        for hub in h_score.keys():
-            h_score[hub] /= max_val_of_vec
+        ###
+        ### A - link matrix, A_ij = ratio of i to j among outlinks from i
+        ### A_t - transposed A
+        ###
+        link_info = LinkInfo(data_rdd=link_data_rdd)
+        self.A:RDD[Tuple[str, Tuple[str, float]]] = link_info.getLinkMatrix()
+        self.A_t:RDD[Tuple[str, Tuple[str, float]]] = link_info.getTransposedLinkMatrix()
         
+        stop_info = StopInfo(data_rdd=id_data_rdd)
+        self.h_score = stop_info.getScoreVector()
+        self.a_score = stop_info.getScoreVector()
+        self.stop_info = stop_info.getStopInfo()
         
-        ## update a_score
-        max_val_of_vec = 1e-12
-        for authority, in_links in A_t.items():
-            score_sum = 0. # for authority node
-            for hub, rate_link in in_links:
-                score_sum += rate_link * h_score[hub]
+        self.calculator = Calculator()
+        
+    def process(self,
+        save_h_path:str,
+        save_a_path:str) -> None:
+        """
+        calculates the hub and authority scores.
+        saves that informations with given path.
+        Args:
+            save_h_path (str): save path for hub score
+            save_a_path (str): save path for authority score
+
+        Returns:
+            None
+        """
+        
+        self.h_score, self.a_score = self.calculator.calculate(
+                                            iteration = self.hits_iteration,
+                                            A=self.A,
+                                            A_t=self.A_t,
+                                            vec_h=self.h_score,
+                                            vec_a=self.a_score
+                                        )
+        ### h and a score look like below
+        ### (stop_id:str, score:float)
+        
+        ###
+        ### join scores with information of stops
+        ###
+        h_score_and_info = self.h_score.join(self.stop_info)
+        a_score_and_info = self.a_score.join(self.stop_info)
+        
+        def extract_values(x:Tuple[str, Tuple[float, Tuple[str, float, float]]]):
+            return x[0], x[1][0], x[1][1][0], x[1][1][1], x[1][1][2]
+            
+        h_score_and_info = h_score_and_info.map(extract_values)
+        a_score_and_info = a_score_and_info.map(extract_values)
+        
+        ###
+        ### output to file
+        ###
+        self.saveInfoAsCsv(h_score_and_info, save_h_path)
+        self.saveInfoAsCsv(a_score_and_info, save_a_path)
+    
+    def saveInfoAsCsv(self, data:RDD[tuple[str, float, str, float, float]], path:str):
+        data = data.collect()
+        with open(path, 'w') as f:
+            f.write("stop_id,score,address,latitude,longitude\n")
+            
+            for stop_id, score, address, latitude, longitude in data:
+                f.write(f"{stop_id},{score},{address},{latitude},{longitude}\n")
                 
-            max_val_of_vec = max(max_val_of_vec, score_sum)
-            a_score[authority] = score_sum
-            
-        for authority in a_score.keys():
-            a_score[authority] /= max_val_of_vec
-    
-    #print(h_score)
-
-def saveScoreVectorAsCsv(data:Dict[str, float], path:str):
-    with open(path, 'w') as f:
-        f.write("stop_id,score\n")
-        for node, score in data.items():
-            f.write(f"{node},{score}\n")
-        f.close()
-
-
-
-def main(
-    train_epoch:int,
-    link_data_path:str,
-    id_data_path:str,
-    save_h_path:str,
-    save_a_path:str):
-    
-    spark = SparkSession \
-    .builder \
-    .master('local') \
-    .appName('demo') \
-    .config("spark.driver.memory", "5g") \
-    .config('spark.executor.memory', '5g') \
-    .getOrCreate()
-    
-    sc = spark.sparkContext
-    link_data_rdd = sc.textFile(link_data_path)
-    id_data_rdd = sc.textFile(id_data_path)
-    
-    link_info = LinkInfo(data_rdd=link_data_rdd)
-    A = link_info.getLinkMatrix()
-    A_t = link_info.getTransposedLinkMatrix()
-    A, A_t = A.collectAsMap(), A_t.collectAsMap()
-    
-    stop_info = StopInfo(data_rdd=id_data_rdd)
-    h_score = stop_info.getScoreVector
-    h_score = h_score.collectAsMap()
-    a_score = deepcopy(h_score)
-    
-    calculate(
-        max_epoch=train_epoch,
-        A=A,
-        A_t=A_t,
-        h_score=h_score,
-        a_score=a_score
-    )
-    
-    saveScoreVectorAsCsv(a_score, save_a_path)
-    saveScoreVectorAsCsv(h_score, save_h_path)
+            f.close()
+        
     
     
 if __name__ == "__main__":
-    main(
-        train_epoch=10000,
-        link_data_path='./encoded_data/20240421.csv',
-        id_data_path='./encoded_data/stops.csv',
-        save_h_path="./scores/20240421_h.csv",
-        save_a_path="./scores/20240421_a.csv"
-    )
+    
+    main = Main(hits_iteration=1,
+                link_data_path='./encoded_data/20240421.csv',
+                id_data_path='./encoded_data/stops.csv'
+            )
+    
+    main.process(
+            save_h_path="./scores/20240421_h.csv",
+            save_a_path="./scores/20240421_a.csv"
+        )
 

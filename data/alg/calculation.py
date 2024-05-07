@@ -5,9 +5,17 @@ from pyspark import RDD
 
 class Calculator(object):
     
-    def __init__(self):
+    
+    def _multiplyMapper(self, x:Tuple[str, Tuple[Tuple[str, float], float]]):
+        assert type(x) == type(x[1]) == type(x[1][0]), f"actual value: {x}"
+        assert type(x[0]) == type(x[1][0][0]) == str, f"actual value: {x}"
+        assert type(x[1][0][1]) == type(x[1][1]) == float, f"actual value: {x}"
         
-        pass
+        return x[1][0][0], x[1][0][1] * x[1][1]
+    
+    def _multiplyReducer(self, x:float, y:float):
+        assert type(x) == type(y) == float
+        return x+y
     
     def multiplyWithT(self, 
         t_matrix: RDD[Tuple[str, Tuple[str, float]]],
@@ -35,14 +43,31 @@ class Calculator(object):
         ## multiplied   : (i, sum(v_1 * v_2))
         ## x[1][0][0]: i, x[1][0][1]: v_1, x[1][1]: v_2
         multiplied = joined \
-            .map(lambda x: (x[1][0][0], x[1][0][1] * x[1][1])) \
-            .reduceByKey(lambda x, y: x+y)
+            .map(self._multiplyMapper) \
+            .reduceByKey(self._multiplyReducer)
             
         return multiplied
     
+    def _normalizeMapper(self, x:Tuple[str, float]):
+        assert type(x) == tuple, f"actual value: {x}"
+        assert type(x[1]) == float        
+        return x[1]
+    
     def normalizeVector(self, vector:RDD[Tuple[str, float]]) -> RDD[Tuple[str, float]]:
+        """_summary_
+        1. find maximum value among dimensions of the vector
+        2. divide each value of dimensions by the maximum value
+        Args:
+            vector (RDD[Tuple[str, float]]): _description_
+
+        Returns:
+            RDD[Tuple[str, float]]: _description_
+        """        
+        max_val = vector\
+            .map(self._normalizeMapper)\
+            .reduce(lambda x, y: x+y)
         
-        pass
+        return vector.map(lambda x: (x[0], x[1]/max_val))
     
     def calculate(self,
         iteration:int,
@@ -61,7 +86,7 @@ class Calculator(object):
             vec_a (RDD[Tuple[str, float]]): _description_
 
         Returns:
-            Tuple[RDD[Tuple[str, float]], RDD[Tuple[str, float]]]: _description_
+            Tuple[RDD[Tuple[str, float]], RDD[Tuple[str, float]]]: h_score, a_score
         """
         h_score = vec_h
         a_score = vec_a

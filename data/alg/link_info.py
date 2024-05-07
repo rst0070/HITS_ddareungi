@@ -17,6 +17,8 @@ class LinkInfo(object):
         
         def filterHead(seq:str):
             """ filter head of the csv file """
+            assert type(seq) == str
+            
             return not seq.startswith('"기준')
         
         def mapToSplitted(seq:str) -> Tuple[Tuple[str, str], int]:
@@ -25,6 +27,8 @@ class LinkInfo(object):
             '"start_id", "end_id", "num"'
             --> ((start_id, end_id), num)
             """
+            assert type(seq) == str
+            
             seq = seq.split(',')
             start, end, num = seq[3][1:-1], seq[5][1:-1], int(seq[7][1:-1])    
             return (start, end), num
@@ -37,6 +41,10 @@ class LinkInfo(object):
             Returns:
                 bool: result of filtering
             """
+            assert type(x) == type(x[0]) == tuple
+            assert type(x[1]) == int and len(x[0]) == 2
+            assert type(x[0][0]) == type(x[0][1]) == str
+            
             return x[0][0] != 'X' and x[0][1] != 'X'
         
         def reduceLink(x:int, y:int) -> int:
@@ -44,25 +52,20 @@ class LinkInfo(object):
             sum duplicated data like below
             ((start, end), x), ((start, end), y) --> ((start, end), x+y)
             """
+            assert type(x) == type (y) == int
+            
             return x+y
         
         def mapToLinkMatrix(link:Tuple[Tuple[str, str], int]) -> Tuple[str, List[Tuple[str, int]]]:
             """
             ( (start, end), num ) --> ( start, (end, num))
             """
+            assert type(link) == type(link[0]) == tuple
+            assert type(link[0][0]) == type(link[0][1]) == str
+            assert type(link[1]) == int
+            
             return link[0][0], (link[0][1], link[1])
         
-        def sumOutlinks(link_val1: Tuple[str, int], link_val2: Tuple[str, int]) -> int:
-            """
-            used for reduceByKey.
-            returns sum of outlinks from start_id
-            Args:
-                link_val1 (Tuple[str, int]): _description_
-                link_val2 (Tuple[str, int]): _description_
-            Returns:
-                int: _description_
-            """
-            return link_val1+link_val2
         def normalizeLinkMatrix(x: Tuple[str, Tuple[ Tuple[str, int], int]]) -> Tuple[str, Tuple[str, float]]:
             """_summary_
             This is mapper function.
@@ -73,6 +76,10 @@ class LinkInfo(object):
             Returns:
                 Tuple[str, Tuple[str, float]]: _description_
             """
+            assert type(x) == type(x[1]) == type(x[1][0]) == tuple
+            assert type(x[0]) == type(x[1][0][0]) == str
+            assert type(x[1][0][1]) == type(x[1][1]) == int, f"values: {x}"
+            
             start, end, nl, sum_nl = x[0], x[1][0][0], x[1][0][1], x[1][1]
             normalized = float(nl) / float(sum_nl)
             return start, (end, normalized)
@@ -92,7 +99,8 @@ class LinkInfo(object):
         
         ## each element: (start_id, sum_of_num_link)
         sum_links = link_matrix \
-            .reduceByKey(sumOutlinks)
+            .map(lambda x: (x[0], x[1][1])) \
+            .reduceByKey(lambda x, y: x+y)
         
         ## each element: (start_id, (end_id, nl/s_nl))
         self.norm_link_matrix:RDD[Tuple[str, Tuple[str, float]]] = link_matrix \
