@@ -46,10 +46,9 @@ aside {
 
 div.scroll {
   margin: 4px, 4px;
-  padding: 4px;
-  background-color: green;
+  padding: 10px;
   width: 500px;
-  height: 110px;
+  height: 500px;
   overflow-x: hidden;
   overflow-y: auto;
   text-align: justify;
