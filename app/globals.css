@@ -21,6 +21,40 @@ body {
 }
 
 .mapDiv{
+  width: 1000px;
+  height: 650px;
+}
+
+.contentDiv{
+  width: 1000px;
+}
+
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 1000px 500px;
+  padding: 10px;
+}
+.grid-item {
+  padding: 20px;
+  text-align: center;
+}
+
+aside {
+  float: right;
+}
+
+div.scroll {
+  margin: 4px, 4px;
+  padding: 4px;
+  background-color: green;
   width: 500px;
-  height: 500px;
+  height: 110px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  text-align: justify;
+}
+
+div.scroll::-webkit-scrollbar {
+  display: none;
 }

@@ -95,11 +95,12 @@ class Main(object):
         Returns:
             List[Tuple[str, float, str, float, float]]: each element has info of each stop including score
         """
-        num_stops = len(score.keys())
+        multi_factor = 100.#len(score.keys())
+        
         result = []
         for stop_id, x in info.items():
             result.append(
-                (stop_id, score[stop_id] * num_stops, x[0], x[1], x[2])
+                (stop_id, score[stop_id] * multi_factor, x[0], x[1], x[2])
             )
         
         result = sorted(result, key = lambda x: x[1], reverse=True)
