@@ -3,11 +3,13 @@ import {useState} from 'react'
 import {Map, MapMarker} from 'react-kakao-maps-sdk'
 import {StopInfo, CenterInfo} from '@/app/types'
 
+const PREFIX_ADDR = 'https://rst0070.github.io/HITS_ddareungi'
+
 function getImgSrcByRank(rank:number){
-  if(rank <= 328) return "/img/markerRed.png"
-  if(rank <= 1000) return "/img/markerOrange.png"
-  if(rank <= 1968) return "/img/markerYellow.png"
-  return "/img/markerGreen.png"
+  if(rank <= 328) return PREFIX_ADDR+"/img/markerRed.png"
+  if(rank <= 1000) return PREFIX_ADDR+"/img/markerOrange.png"
+  if(rank <= 1968) return PREFIX_ADDR+"/img/markerYellow.png"
+  return PREFIX_ADDR+"/img/markerGreen.png"
 }
 
 function Marker(props: {stopInfo: StopInfo, openAtStart:boolean}){
