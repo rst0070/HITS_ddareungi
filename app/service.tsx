@@ -1,21 +1,13 @@
 import * as fs from "fs";
-import * as path from "path";
+import { StopInfo } from "./types";
 
 const DATA_H_PATH = 'data/scores/20240421_h.csv'//path.resolve(__dirname, 'data/scores/20240421_h.csv');
 const DATA_A_PATH = 'data/scores/20240421_a.csv'//path.resolve(__dirname, 'data/scores/20240421_a.csv');
-const CSV_HEADERS = ['stop_id', 'score', 'address', 'latitude', 'longitude']
 
-export type StopInfo = {
-  stop_id: string,
-  score: number,
-  address: string,
-  latitude: string,
-  longitude: string
-}
-
-function createStopInfoObj(stop_id:string, score:number, address:string, latitude:string, longitude:string){
+function createStopInfoObj(stop_id:string, rank:number, score:string, address:string, latitude:number, longitude:number){
   let obj:StopInfo = {
     stop_id,
+    rank,
     score,
     address,
     latitude,
@@ -29,9 +21,9 @@ function readAndSplitData(data_path:string){
   let line_data = str_data.split('\n')
   let result = []
 
-  for(let i = 0; i < line_data.length-1; i++){
+  for(let i = 1; i < line_data.length-1; i++){
     let data_seq = line_data[i].split(',')
-    let stop_info = createStopInfoObj(data_seq[0], Number(data_seq[1]), data_seq[2], data_seq[3], data_seq[4])
+    let stop_info = createStopInfoObj(data_seq[0], i, Number(data_seq[1]).toFixed(2), data_seq[2], Number(data_seq[3]), Number(data_seq[4]))
     result.push(stop_info)
   }
   return result
