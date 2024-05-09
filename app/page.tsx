@@ -1,16 +1,22 @@
+import Script from 'next/script'
 import {HScore, AScore} from './service'
-import Container from "@/components/Container";
+import Contents
+ from '@/components/Contents';
 
+
+const APP_KEY = '633117026be1caa09108a7721bed0b2d'
+const KAKAO_SDK_URL = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${APP_KEY}&autoload=false`;
 
 export default function Home() {
   let date = '2024.05.09'
+
   return (
     <>
-      <p className="navBar">따릉이 부족, 넘침 점수 {date}기준</p>
-      <center>
-        <Container title="부족점수" scores={HScore} />
-        <Container title="넘침점수" scores={AScore} />
-      </center>      
+      <Script src={KAKAO_SDK_URL} strategy="beforeInteractive" />
+      <div className="navBar">
+        <h1>따릉이HITS {date}기준</h1>
+      </div>
+      <Contents HScore={HScore} AScore={AScore} />
     </>
   );
 }

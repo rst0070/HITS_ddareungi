@@ -6,11 +6,11 @@ def changeSave(euc_kr, utf_8):
     utf_8.close()
     
 # changeSave(
-#     open("./tpss_bcycl_od_statnhm_20240421.csv", mode="r", encoding="euc-kr"),
-#     open("./20240421.csv",encoding='utf-8', mode="w")
+#     open("./raw_data/tpss_bcycl_od_statnhm_20240503.csv", mode="r", encoding="euc-kr"),
+#     open("./encoded_data/20240503.csv",encoding='utf-8', mode="w")
 # )
 
 changeSave(
-    open("./stops_euc_kr.csv", mode="r", encoding="euc-kr"),
-    open("./stops.csv",encoding='utf-8', mode="w")
+    open("./raw_data/stops_euc_kr.csv", mode="r", encoding="euc-kr"),
+    open("./encoded_data/stops.csv",encoding='utf-8', mode="w")
 )

@@ -3,34 +3,39 @@ import { MouseEventHandler, useState } from "react";
 import { StopInfo, CenterInfo } from "@/app/types";
 import KakaoMap from "./KakaoMap";
 
-function StopElement(props: {order:string, stopInfo:StopInfo, clickListener:Function}){
+function StopElement(props: {stopInfo:StopInfo, clickListener:Function}){
     const handleClick: MouseEventHandler = (event) => {
         props.clickListener(props.stopInfo)
     };
 
     return (
-      <div className="stop_element" onClick={handleClick}>
-        <div className="stop_element_order">{props.order}</div>
+      <li className="stop_element" onClick={handleClick}>
+        <div className="stop_element_order">{props.stopInfo.rank}</div>
         <div className="stop_element_score">{props.stopInfo.score}</div>
         <div className="stop_element_addr">{props.stopInfo.address}</div>
-      </div>
+      </li>
     )
 }
   
-function StopList(props: {stopList:StopInfo[], clickListener:Function}){
+function StopList(props: {stopList:StopInfo[], category:string, clickListener:Function}){
     let el_list = []
     for(let i=0; i < props.stopList.length; i++)
-      el_list.push(<StopElement order={String(i+1)} stopInfo={props.stopList[i]} clickListener={props.clickListener}/>)
+      el_list.push(<StopElement key={props.stopList[i].stop_id+props.category} stopInfo={props.stopList[i]} clickListener={props.clickListener}/>)
   
     return (
-      <div className="stop_scroll">
+      <ul className="stop_scroll">
+        <li className="stop_element">
+          <div className="stop_element_order">순위</div>
+          <div className="stop_element_score">점수</div>
+          <div className="stop_element_addr">주소</div>
+        </li>
         {el_list}
-      </div>
+      </ul>
     )
 }
 
 
-export default function Container(props: {title:string, scores:StopInfo[]}){
+export default function Container(props: {title:string, scores:StopInfo[], category:string}){
 
     let initialCenterInfo: CenterInfo = {id: props.scores[0].stop_id, latitude: props.scores[0].latitude, longitude: props.scores[0].longitude}
     
@@ -45,13 +50,9 @@ export default function Container(props: {title:string, scores:StopInfo[]}){
     }
 
     return (
-        <div className="grid-container">
-          <div className="grid-item">
+        <div className="contents-container">
             <KakaoMap stopList={props.scores} centerInfo={centerInfo}/>
-          </div>
-          <div className="grid-item">
-            <StopList stopList={props.scores} clickListener={handleClick}/>
-          </div>
+            <StopList stopList={props.scores} category={props.category} clickListener={handleClick}/>
         </div>
     );
 }

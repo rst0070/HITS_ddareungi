@@ -63,8 +63,9 @@ class HITSCalculator(object):
                 h_score[hub] = score_sum
 
             ## normalize h_score
-            for hub in h_score.keys():
-                h_score[hub] /= max_val_of_vec
+            if max_val_of_vec > 1.:
+                for hub in h_score.keys():
+                    h_score[hub] /= max_val_of_vec
 
 
             ## update a_score
@@ -77,7 +78,8 @@ class HITSCalculator(object):
                 max_val_of_vec = max(max_val_of_vec, score_sum)
                 a_score[authority] = score_sum
 
-            for authority in a_score.keys():
-                a_score[authority] /= max_val_of_vec
+            if max_val_of_vec > 1.:
+                for authority in a_score.keys():
+                    a_score[authority] /= max_val_of_vec
         
         return h_score, a_score

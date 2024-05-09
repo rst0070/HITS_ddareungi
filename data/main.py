@@ -4,6 +4,7 @@ from alg.stop_info import StopInfo
 from alg.calculation import HITSCalculator
 from typing import Tuple, Dict, List
 from pyspark import RDD
+import os
 
 class Main(object):
     
@@ -108,7 +109,10 @@ class Main(object):
         return result
     
     def saveInfoAsCsv(self, data:List[tuple[str, float, str, float, float]], path:str):
-        with open(path, 'w') as f:
+        
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        
+        with open(path, 'w+') as f:
             f.write("stop_id,score,address,latitude,longitude\n")
             
             for stop_id, score, address, latitude, longitude in data:
@@ -120,13 +124,13 @@ class Main(object):
     
 if __name__ == "__main__":
     
-    main = Main(hits_iteration=800,
-                link_data_path='./encoded_data/20240421.csv',
+    main = Main(hits_iteration=5,
+                link_data_path='./encoded_data/20240503.csv',
                 id_data_path='./encoded_data/stops.csv'
             )
     
     main.process(
-            save_h_path="./scores/20240421_h.csv",
-            save_a_path="./scores/20240421_a.csv"
+            save_h_path="./scores/20240503_h.csv",
+            save_a_path="./scores/20240503_a.csv"
         )
 

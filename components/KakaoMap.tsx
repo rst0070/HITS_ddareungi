@@ -1,10 +1,7 @@
-import Script from 'next/script'
-import React from 'react'
+'use client'
+import {useState} from 'react'
 import {Map, MapMarker} from 'react-kakao-maps-sdk'
 import {StopInfo, CenterInfo} from '@/app/types'
-
-const APP_KEY = '633117026be1caa09108a7721bed0b2d'
-const KAKAO_SDK_URL = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${APP_KEY}&autoload=false`;
 
 function getImgSrcByRank(rank:number){
   if(rank <= 328) return "/img/markerRed.png"
@@ -12,9 +9,13 @@ function getImgSrcByRank(rank:number){
   if(rank <= 1968) return "/img/markerYellow.png"
   return "/img/markerGreen.png"
 }
-function Marker(props: {stopInfo: StopInfo}){
+
+function Marker(props: {stopInfo: StopInfo, openAtStart:boolean}){
   let img_src = getImgSrcByRank( props.stopInfo.rank )
-  
+  // if(props.stopInfo.rank == 1)
+  //   console.log(img_src)
+  const [isOpen, setIsOpen] = useState(props.openAtStart)
+
   return (
     <MapMarker // 마커를 생성합니다
       key={props.stopInfo.stop_id}
@@ -31,17 +32,48 @@ function Marker(props: {stopInfo: StopInfo}){
         }, // 마커이미지의 크기입니다
       }}
       title={props.stopInfo.address}
-    />
+      clickable={true}
+      onClick={() => {console.log(props.stopInfo.stop_id);setIsOpen(true);}}
+    >
+      {isOpen && (
+          <div style={{ minWidth: "150px" }}>
+            <img
+              alt="close"
+              width="14"
+              height="13"
+              src="https://t1.daumcdn.net/localimg/localimages/07/mapjsapi/2x/bt_close.gif"
+              style={{
+                position: "absolute",
+                right: "5px",
+                top: "5px",
+                cursor: "pointer",
+              }}
+              onClick={() => setIsOpen(false)}
+            />
+            <div style={{ padding: "5px", color: "#000" }}>
+              <a 
+                href={'https://map.kakao.com/link/map/'+props.stopInfo.address+','+props.stopInfo.latitude+','+props.stopInfo.longitude}
+                target="_blank" rel="go to navigation"
+              >
+              {props.stopInfo.address}
+              </a>
+            </div>
+          </div>
+        )}
+    </MapMarker>
   );
 }
 
-function MarkerList(props: {stopList: StopInfo[]}){
+function MarkerList(props: {stopList: StopInfo[], centerInfo: CenterInfo}){
+    console.log(props.stopList[0].rank)
+    let markers = []
+    for(let i = 0; i < props.stopList.length; i++){
+      markers.push(<Marker key={props.stopList[i].stop_id} stopInfo={props.stopList[i]} openAtStart={props.stopList[i].stop_id == props.centerInfo.id}/>)
+    }
     return (
       <>
-        {
-          props.stopList.map((value, index, arr) => <Marker stopInfo={value} />)
-        }
-    </>
+        {markers}
+      </>
     )
 }
 
@@ -49,16 +81,14 @@ function MarkerList(props: {stopList: StopInfo[]}){
 export default function KakaoMap(props: {stopList:StopInfo[], centerInfo:CenterInfo}){
 
   const start_position = {lat: props.centerInfo.latitude, lng: props.centerInfo.longitude}
-
   return (
     <div className="map-container">
-      <Script src={KAKAO_SDK_URL} strategy="beforeInteractive" />
       <Map 
           center={{ lat: start_position.lat, lng: start_position.lng }} 
           style={{ width: '100%', height: '100%' }} 
           level={4}
       >
-        <MarkerList stopList={props.stopList} />
+        <MarkerList stopList={props.stopList} centerInfo={props.centerInfo}/>
       </Map>
     </div>
   );
