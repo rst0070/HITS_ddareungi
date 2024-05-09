@@ -5,5 +5,5 @@ const nextConfig = {
     output: 'export',
     assetPrefix: prefix
 };
-
+  
 export default nextConfig;
