@@ -14,6 +14,8 @@ function getImgSrcByRank(rank:number){
 
 function Marker(props: {stopInfo: StopInfo, openAtStart:boolean}){
   let img_src = getImgSrcByRank( props.stopInfo.rank )
+  let urlNavigation = 'https://map.kakao.com/link/to/'+props.stopInfo.address+','+props.stopInfo.latitude+','+props.stopInfo.longitude
+  let urlRoadView = "https://map.kakao.com/link/roadview/"+props.stopInfo.latitude+","+props.stopInfo.longitude
   // if(props.stopInfo.rank == 1)
   //   console.log(img_src)
   const [isOpen, setIsOpen] = useState(props.openAtStart)
@@ -53,12 +55,11 @@ function Marker(props: {stopInfo: StopInfo, openAtStart:boolean}){
               onClick={() => setIsOpen(false)}
             />
             <div style={{ padding: "5px", color: "#000" }}>
-              <a 
-                href={'https://map.kakao.com/link/map/'+props.stopInfo.address+','+props.stopInfo.latitude+','+props.stopInfo.longitude}
-                target="_blank" rel="go to navigation"
-              >
-              {props.stopInfo.address}
-              </a>
+              <p>{props.stopInfo.address}</p>
+            </div>
+            <div style={{display: 'flex', padding: '5px', flexDirection: 'row', justifyContent: 'center'}}>
+                <button type="button" onClick={() => location.href=urlNavigation}>길찾기</button>
+                <button type="button" onClick={() => location.href=urlRoadView}>로드뷰</button>
             </div>
           </div>
         )}
