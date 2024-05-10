@@ -56,10 +56,11 @@ function Marker(props: {stopInfo: StopInfo, openAtStart:boolean}){
             />
             <div style={{ padding: "5px", color: "#000" }}>
               <p>{props.stopInfo.address}</p>
-              <div style={{display: 'flex', padding: '5px', flexDirection: 'row', justifyContent: 'center'}}>
-                <button type="button" onClick={() => location.href=urlNavigation}>길찾기</button>
-                <button type="button" onClick={() => location.href=urlRoadView}>로드뷰</button>
-              </div>
+              <button type="button" onClick={() => location.href=urlNavigation}>길찾기</button>
+              <button type="button" onClick={() => location.href=urlRoadView}>로드뷰</button>
+              {/* <div style={{display: 'flex', padding: '5px', flexDirection: 'row', justifyContent: 'center'}}>
+                
+              </div> */}
             </div>
           </div>
         )}

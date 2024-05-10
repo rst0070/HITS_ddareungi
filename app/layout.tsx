@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "따릉이 부족, 넘침 정보",
-  description: "따릉이 정류소별 따릉이의 부족, 넘침 정보를 보여줍니다.",
+  title: "따릉이 대여소 중요도(HITS)",
+  description: "따릉이 대여, 반남에 따른 대여소별 중요도를 보여줍니다.",
 };
 
 export default function RootLayout({children,}: Readonly<{children: React.ReactNode;}>) {
